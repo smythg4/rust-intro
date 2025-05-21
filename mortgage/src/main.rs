@@ -195,25 +195,47 @@ impl fmt::Display for AmortizationSchedule {
     }
 }
 
+#[derive(Clone)]
+struct Scenario {
+    additional_payment: f64,
+    total_payments: usize,
+    total_interest: f64,
+    payoff_date: DateTime<Utc>,
+    interest_savings: f64,
+    savings_ratio: f64,
+}
+
 fn compare_payment(mort: Mortgage, pay_inc: f64) {
+    let mut results = Vec::new();
+
     let mut this_mort = mort;
     let baseline_amort = this_mort.generate_amortization_schedule();
     let baseline_interest = baseline_amort.total_interest_paid;
-    let baseline_payments = baseline_amort.payments.len();
-    //let baseline_payoff_date = baseline_amort.payments.get(baseline_payments-1).unwrap().payment_date;
-    for i in 1..10 {
+
+    for i in 0..=10 {
         let payment = pay_inc * i as f64;
         this_mort = this_mort.with_additional_payment(payment);
         let amort = this_mort.generate_amortization_schedule();
         let payments = amort.payments.len();
         let interest_paid = amort.total_interest_paid;
         let payoff_date = amort.payments.get(payments-1).unwrap().payment_date;
-        println!("With additional payments of ${:.2}", payment);
-        println!("   Total Payments: {}", payments);
-        println!("   Total Interest: ${:.2}", interest_paid);
-        println!("   Payoff Date: {}", payoff_date.format("%Y-%b-%d"));
-        println!("   Payments avoided: {}", baseline_payments - amort.payments.len());
-        println!("   Interest savings: ${:.2}", baseline_interest - amort.total_interest_paid);
+        results.push( Scenario {
+            additional_payment: payment,
+            total_payments: payments,
+            total_interest: interest_paid,
+            payoff_date,
+            interest_savings: baseline_interest - amort.total_interest_paid,
+            savings_ratio: (baseline_interest - amort.total_interest_paid) / payment,
+        });
+    }
+    //results.sort_unstable_by_key(|item| item.savings_ratio as i64);
+    for result in results {
+        println!("With additional payments of ${:.2}", result.additional_payment);
+        println!("   Total Payments: {}", result.total_payments);
+        println!("   Total Interest: ${:.2}", result.total_interest);
+        println!("   Payoff Date: {}", result.payoff_date.format("%Y-%b-%d"));
+        println!("   Interest savings: ${:.2}", result.interest_savings);
+        println!("   Savings Ratio: ${:.2} per $1 per month", result.savings_ratio);
     }
     
 }
@@ -223,17 +245,13 @@ fn main() {
     let mut mort = Mortgage::new(origin_date, 479000.0, 5.5, 30);
     println!("New Mortgage created on origin date: {}", origin_date.format("%Y-%b-%d"));
     mort.generate_history(Utc::now());
-    
-    let old_payment = mort.monthly_payment();
 
-    mort = mort.refinance(4.75);
+    // mort = mort.with_additional_payment(200.0);
 
-    let new_payment = mort.monthly_payment();
+    // let amort = mort.generate_amortization_schedule();
+    // println!("{}",amort);
 
-    mort = mort.with_additional_payment(old_payment-new_payment);
-
-    let amort = mort.generate_amortization_schedule();
-    println!("{}",amort);
+    compare_payment(mort, 50.0);
 }
 
 #[cfg(test)]
