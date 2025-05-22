@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Ashley's Account",
+    "account_type": {
+      "CD": {
+        "maturity_date": "2028-05-06T11:54:44.473723Z",
+        "early_withdrawal_fee": 0.1
+      }
+    },
+    "starting_balance": 15000.0,
+    "balance": 15000.0,
+    "interest_rate": 4.1,
+    "transactions": []
+  },
+  {
+    "name": "Stephen's Account",
+    "account_type": {
+      "Checking": {
+        "overdraft_limit": 1000.0,
+        "overdraft_fee": 25.0
+      }
+    },
+    "starting_balance": 10000.0,
+    "balance": 10000.0,
+    "interest_rate": 0.5,
+    "transactions": []
+  }
+]
