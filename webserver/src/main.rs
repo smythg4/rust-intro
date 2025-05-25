@@ -2,10 +2,12 @@ use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-struct MortgageForm {
-    name: String,
+struct FinancialCalc {
+    interest_per_year: String,
+    num_periods: String,
+    present_value: String,
     payment: String,
-    years: String,
+    future_value: String,
 }
 
 #[actix_web::main]
@@ -28,18 +30,22 @@ async fn get_index() -> HttpResponse {
         .content_type("text/html")
         .body(
             r#"
-            <title>Simple webpage with form</title>
+            <title>Financial Calculator</title>
             <form action="/handle" method="post">
             <table padding="5">
                 <tr>
-                    <th>Name:</th>
+                    <th>Number of Periods:</th>
+                    <th>Interest per Year:</th>
+                    <th>Present Value:</th>
                     <th>Payment:</th>
-                    <th>Years:</th>
+                    <th>Future Value:</th>
                 </tr>
                 <tr>
-                    <td><input type="text" name="name" /></td>
+                    <td><input type="text" name="num_periods" /></td>
+                    <td><input type="text" name="interest_per_year" /></td>
+                    <td><input type="text" name="present_value" /></td>
                     <td><input type="text" name="payment" /></td>
-                    <td><input type="text" name="years" /></td>
+                    <td><input type="text" name="future_value" /></td>
                 </tr>
             </table>
             <div>
@@ -50,19 +56,38 @@ async fn get_index() -> HttpResponse {
         )
 }
 
-async fn handle_form(form: web::Form<MortgageForm>) -> impl Responder {
-    let payment = match form.payment.parse::<u32>() {
+fn calc_fv(n: usize, i: f64, pv: f64, pmt: f64) -> f64 {
+    println!("Received - n: {n}, i: {i}, pv: {pv}, pmt: {pmt}");
+    let mut fv = pv;
+    for _ in 0..n {
+        let int = i*fv;
+        println!("pv: {fv}, pmt: {pmt}, int: {int}");
+        fv = fv + pmt + int;
+        println!("fv: {fv}");
+    }
+    fv
+}
+
+async fn handle_form(form: web::Form<FinancialCalc>) -> impl Responder {
+    let payment = match form.payment.parse::<f64>() {
         Ok(val) => val,
         Err(_) => return HttpResponse::BadRequest().body("Invalid payment value"),
     };
-    let years = match form.years.parse::<u32>() {
+    let periods = match form.num_periods.parse::<usize>() {
         Ok(val) => val,
-        Err(_) => return HttpResponse::BadRequest().body("Invalid year value"),
+        Err(_) => return HttpResponse::BadRequest().body("Invalid number of periods"),
     };
+    let present_value = match form.present_value.parse::<f64>() {
+        Ok(val) => val,
+        Err(_) => return HttpResponse::BadRequest().body("Invalid number of periods"),
+    };
+    let annual_interest = match form.interest_per_year.parse::<f64>() {
+        Ok(val) => val,
+        Err(_) => return HttpResponse::BadRequest().body("Invalid number of periods"),
+    };
+    let fv = calc_fv(periods, annual_interest, present_value, payment);
 
-    let total_paid = payment as u32 * (years as u32 * 12);
-
-    let response = format!("Name: {}. Additional Payment: {}", form.name, total_paid);
+    let response = format!("Future Value: ${:.2}", fv);
 
     HttpResponse::Ok()
         .content_type("text/html")

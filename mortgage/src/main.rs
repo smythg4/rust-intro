@@ -173,7 +173,7 @@ impl fmt::Display for AmortizationSchedule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Amortization Schedule")?;
         writeln!(f, "--------------------------------------------------------------------------------")?;
-        writeln!(f, "{:>4} | {:>12} | {:>12} | {:>12} | {:>12} | {:>12}",
+        writeln!(f, "{:>4} | {:>12}  | {:>12} | {:>12} | {:>12} | {:>12}",
             "Pmt#", "Payment Date", "Payment", "Principal", "Interest", "Remaining")?;
         writeln!(f, "--------------------------------------------------------------------------------")?;
 
@@ -246,12 +246,12 @@ fn main() {
     println!("New Mortgage created on origin date: {}", origin_date.format("%Y-%b-%d"));
     mort.generate_history(Utc::now());
 
-    // mort = mort.with_additional_payment(200.0);
+     mort = mort.with_additional_payment(200.0);
 
-    // let amort = mort.generate_amortization_schedule();
-    // println!("{}",amort);
+     let amort = mort.generate_amortization_schedule();
+     println!("{}",amort);
 
-    compare_payment(mort, 50.0);
+    // compare_payment(mort, 50.0);
 }
 
 #[cfg(test)]
